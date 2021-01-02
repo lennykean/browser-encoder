@@ -1,0 +1,38 @@
+<html>
+  <head>
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.9.6/dist/ffmpeg.min.js"></script>
+  </head>
+  <body style="display: flex; flex-direction: column; align-items: center">
+    <input type="file" id="upload" />
+    <audio id="player" controls></audio>
+    <script>
+      (async function () {
+        const ffmpeg = FFmpeg.createFFmpeg({
+          log: true,
+          progress: (progressArgs) => {
+            console.log(progressArgs);
+          },
+        });
+        await ffmpeg.load();
+
+        document.getElementById("upload").addEventListener(
+          "change",
+          async ({
+            target: {
+              files: [file],
+            },
+          }) => {
+            ffmpeg.FS("writeFile", file.name, await FFmpeg.fetchFile(file));
+            await ffmpeg.run("-i", file.name, file.name + ".mp3");
+            const mp3 = ffmpeg.FS("readFile", file.name + ".mp3");
+            const player = document.getElementById("player");
+            player.src = URL.createObjectURL(
+              new Blob([mp3.buffer], { type: "audio/mp3" })
+            );
+            player.play();
+          }
+        );
+      })();
+    </script>
+  </body>
+</html>
